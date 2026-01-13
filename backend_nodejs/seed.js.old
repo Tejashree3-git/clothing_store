@@ -1,0 +1,72 @@
+const mongoose = require("mongoose");
+const path = require("path");
+
+// Load .env (correct absolute location)
+require("dotenv").config({
+    path: path.resolve(__dirname, "../.env"),
+});
+
+// Load Product model (correct path)
+const Product = require("../models/Product");
+
+// Sample seed data
+const products = [
+    {
+        name: "Sample T-shirt",
+        description: "High-quality cotton t-shirt",
+        category: "T-Shirts",
+        gender: "Men",
+        price: 799,
+        discount_price: 599,
+        sizes: ["M", "L", "XL"],
+        colors: ["Black", "White"],
+        stock: 25,
+        rating: 4.5,
+    },
+    {
+        name: "Sample Hoodie",
+        description: "Warm and stylish men’s hoodie",
+        category: "Hoodies",
+        gender: "Men",
+        price: 1299,
+        discount_price: 999,
+        sizes: ["L", "XL"],
+        colors: ["Blue"],
+        stock: 15,
+        rating: 4.7,
+    },
+];
+
+// Connect to MongoDB
+const connectDB = async () => {
+    try {
+        console.log("Connecting to MongoDB...");
+        await mongoose.connect(process.env.MONGO_URI);
+        console.log("MongoDB Connected!");
+    } catch (error) {
+        console.error("Database connection failed:", error.message);
+        process.exit(1);
+    }
+};
+
+// Seeding function
+const seedData = async () => {
+    try {
+        await connectDB();
+
+        await Product.deleteMany();
+        console.log("Cleared old products");
+
+        await Product.insertMany(products);
+        console.log("Inserted new products");
+
+        console.log("Seeding completed successfully!");
+        process.exit();
+    } catch (error) {
+        console.error("Seeding error:", error.message);
+        process.exit(1);
+    }
+};
+
+// Start seeding
+seedData();

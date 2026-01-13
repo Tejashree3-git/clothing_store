@@ -21,20 +21,29 @@ const Products = () => {
   const colors = ['Black', 'White', 'Red', 'Blue', 'Green', 'Pink', 'Yellow', 'Gray'];
   const sizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
   
-  const products = [
-    { id: 1, name: 'Oversized Wool Blazer', price: 15749, category: 'Women', image: 'https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=400&h=500&fit=crop', badge: 'NEW', rating: 4.8, colors: ['Black', 'Gray'], sizes: ['S', 'M', 'L'] },
-    { id: 2, name: 'Tailored Suit Pants', price: 11999, category: 'Men', image: 'https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?w=400&h=500&fit=crop', badge: 'HOT', rating: 4.6, colors: ['Black', 'Navy'], sizes: ['M', 'L', 'XL'] },
-    { id: 3, name: 'Silk Evening Dress', price: 24999, category: 'Women', image: 'https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=400&h=500&fit=crop', badge: 'LIMITED', rating: 4.9, colors: ['Red', 'Black'], sizes: ['XS', 'S', 'M'] },
-    { id: 4, name: 'Leather Biker Jacket', price: 32499, category: 'Men', image: 'https://images.unsplash.com/photo-1576871337626-960f461b8948?w=400&h=500&fit=crop', badge: '-20%', rating: 4.7, colors: ['Black', 'Brown'], sizes: ['M', 'L', 'XL', 'XXL'] },
-    { id: 5, name: 'Designer Handbag', price: 18999, category: 'Accessories', image: 'https://images.unsplash.com/photo-1584917845444-30f25de5fc68?w=400&h=500&fit=crop', badge: 'NEW', rating: 4.5, colors: ['Black', 'Brown', 'White'], sizes: ['One Size'] },
-    { id: 6, name: 'Classic Oxford Shoes', price: 12999, category: 'Shoes', image: 'https://images.unsplash.com/photo-1549298916-b41d501d3772?w=400&h=500&fit=crop', badge: null, rating: 4.4, colors: ['Black', 'Brown'], sizes: ['7', '8', '9', '10', '11'] },
-    { id: 7, name: 'Cashmere Sweater', price: 11499, category: 'Women', image: 'https://images.unsplash.com/photo-1434389677669-e08b4cac3105?w=400&h=500&fit=crop', badge: null, rating: 4.8, colors: ['Gray', 'Cream', 'Pink'], sizes: ['XS', 'S', 'M', 'L'] },
-    { id: 8, name: 'Minimal Watch', price: 8999, category: 'Accessories', image: 'https://images.unsplash.com/photo-1523170335258-f5ed142444b9?w=400&h=500&fit=crop', badge: 'SALE', rating: 4.3, colors: ['Black', 'Silver'], sizes: ['One Size'] },
-    { id: 9, name: 'Wide Leg Trousers', price: 7469, category: 'Women', image: 'https://images.unsplash.com/photo-1594633312681-960f461b8948?w=400&h=500&fit=crop', badge: '-20%', rating: 4.7, colors: ['Black', 'White'], sizes: ['S', 'M', 'L'] },
-    { id: 10, name: 'Denim Jacket', price: 12999, category: 'Men', image: 'https://images.unsplash.com/photo-1551698618-1dfe66d6d624?w=400&h=500&fit=crop', badge: null, rating: 4.6, colors: ['Blue', 'Black'], sizes: ['M', 'L', 'XL'] },
-    { id: 11, name: 'Midi Skirt', price: 8999, category: 'Women', image: 'https://images.unsplash.com/photo-1594633312681-960f461b8948?w=400&h=500&fit=crop', badge: null, rating: 4.7, colors: ['Black', 'Red'], sizes: ['XS', 'S', 'M'] },
-    { id: 12, name: 'Leather Boots', price: 15999, category: 'Shoes', image: 'https://images.unsplash.com/photo-1549298916-b41d501d3772?w=400&h=500&fit=crop', badge: null, rating: 4.9, colors: ['Black', 'Brown'], sizes: ['6', '7', '8', '9', '10'] },
-  ];
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const API_BASE = process.env.REACT_APP_API_URL || '/api';
+  
+  React.useEffect(() => {
+    const controller = new AbortController();
+    setLoading(true);
+    const params = new URLSearchParams();
+    if (selectedCategory !== 'All') params.set('category', selectedCategory);
+    fetch(`${API_BASE}/products?${params.toString()}`, { signal: controller.signal })
+      .then(async (res) => {
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || 'Failed to fetch products');
+        setProducts(Array.isArray(data.products) ? data.products : data);
+        setError(null);
+      })
+      .catch((err) => {
+        if (err.name !== 'AbortError') setError(err.message);
+      })
+      .finally(() => setLoading(false));
+    return () => controller.abort();
+  }, [selectedCategory]);
 
   const filteredProducts = products.filter(product => {
     const matchesCategory = selectedCategory === 'All' || product.category === selectedCategory;
@@ -247,26 +256,20 @@ const Products = () => {
               </div>
             </div>
 
-            {/* Products Grid */}
-            {sortedProducts.length > 0 ? (
+            {loading ? (
+              <div className="text-center py-12"><p className="text-gray-600">Loading products...</p></div>
+            ) : error ? (
+              <div className="text-center py-12"><p className="text-red-600">{error}</p></div>
+            ) : sortedProducts.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 {sortedProducts.map(product => (
-                  <div key={product.id} className="group cursor-pointer">
+                  <div key={product._id || product.id} className="group cursor-pointer">
                     <div className="relative overflow-hidden bg-gray-100 rounded-lg">
                       <img 
-                        src={product.image} 
+                        src={product.image || (product.images && product.images[0]) || ''} 
                         alt={product.name} 
                         className="w-full h-80 object-cover transition-transform duration-700 group-hover:scale-110"
                       />
-                      
-                      {/* Badge */}
-                      {product.badge && (
-                        <div className="absolute top-3 left-3 px-3 py-1 bg-black text-white text-xs font-medium rounded-full">
-                          {product.badge}
-                        </div>
-                      )}
-                      
-                      {/* Hover Actions */}
                       <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-300 flex items-center justify-center gap-3">
                         <button className="opacity-0 group-hover:opacity-100 bg-white text-black p-3 rounded-full transform translate-y-4 group-hover:translate-y-0 transition-all duration-300 hover:bg-gray-100">
                           <FaShoppingBag />
@@ -276,11 +279,10 @@ const Products = () => {
                         </button>
                       </div>
                     </div>
-                    
                     <div className="mt-4">
                       <h3 className="text-sm font-medium text-gray-900 line-clamp-1">{product.name}</h3>
                       <p className="text-lg font-semibold text-gray-900 mt-1">₹{product.price}</p>
-                      {renderRating(product.rating)}
+                      {renderRating(product.rating || 0)}
                     </div>
                   </div>
                 ))}

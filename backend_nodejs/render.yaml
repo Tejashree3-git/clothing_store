@@ -1,0 +1,45 @@
+# Render Configuration File
+# Reference: https://render.com/docs/deploy-render-yaml
+
+services:
+  - type: web
+    name: clothing-store-backend
+    env: node
+    region: singapore  # Choose the closest region to you
+    plan: free
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: JWT_SECRET
+        generateValue: true
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: COOKIE_SECURE
+        value: 'true'
+      - key: COOKIE_HTTP_ONLY
+        value: 'true'
+      - key: LOG_LEVEL
+        value: 'info'
+      - key: LOG_TO_FILE
+        value: 'false'  # Render handles logging
+      - key: RATE_LIMIT_WINDOW_MS
+        value: '900000'  # 15 minutes in milliseconds
+      - key: RATE_LIMIT_MAX
+        value: '100'
+    # These will be set in the Render dashboard
+    # - MONGO_URI: Your MongoDB Atlas connection string
+    # - FRONTEND_URL: Your frontend URL (e.g., https://your-frontend-url.com)
+    # - ALLOWED_ORIGINS: Comma-separated list of allowed origins
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /api/health
+    autoDeploy: true  # Automatically deploy when pushing to the connected repo
+
+# Uncomment and configure if you need a database
+# databases:
+#   - name: clothing-store-db
+#     databaseName: clothing_store
+#     user: clothing_user
+#     plan: free
